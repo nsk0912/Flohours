@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flohours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Libre Baskerville', Baskerville, Georgia, serif; }
+body { display: flex; align-items: center; justify-content: center; background: #000; }
+
+/* Spinning gradient div — much simpler than canvas */
+#bgGradient {
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 300vmax; height: 300vmax;
+  margin-left: -150vmax; margin-top: -150vmax;
+  z-index: 0;
+  animation: spinGradient 60s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    #5a7a9e,
+    #7a9db8,
+    #c4b96a,
+    #d4c97a,
+    #c4b96a,
+    #7a9db8,
+    #5a7a9e
+  );
+}
+
+@keyframes spinGradient {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+#lineCanvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
+.scene {
+  position: relative; z-index: 1;
+  width: min(98vw, 560px);
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.title {
+  font-weight: 400; font-size: clamp(10px, 2vw, 12px);
+  letter-spacing: 0.25em; color: rgba(255,255,255,0.92); font-style: normal;
+  text-align: center; margin-bottom: clamp(14px, 3vw, 24px);
+  text-shadow: 0 1px 20px rgba(0,0,0,0.15);
+}
+
+.clock-wrap { position: relative; width: 100%; aspect-ratio: 1; }
+#clockCanvas { width: 100%; height: 100%; display: block; }
+
+.center-text {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none; width: 52%;
+}
+.center-label {
+  font-size: clamp(7px, 1.2vw, 8px); letter-spacing: 0.18em;
+  text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 5px;
+}
+.center-flower {
+  font-size: clamp(11px, 2vw, 14px); font-style: normal; font-weight: 400;
+  color: rgba(255,255,255,0.88); line-height: 1.2;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.15); transition: opacity 0.8s ease;
+}
+.center-offline {
+  font-size: clamp(10px, 1.8vw, 13px); font-style: normal; font-weight: 400;
+  color: rgba(255,255,255,0.65); line-height: 1.6;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.15); transition: opacity 0.8s ease;
+  display: none;
+}
+
+.freeze-wrap {
+  margin-top: clamp(14px, 3.5vw, 24px);
+  display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+}
+.freeze-label {
+  font-size: clamp(8px, 1.5vw, 10px); letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.55);
+}
+.freeze-dot {
+  width: clamp(10px, 2.5vw, 14px); height: clamp(10px, 2.5vw, 14px);
+  border-radius: 50%; background: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.5); transition: background 0.3s, transform 0.3s;
+}
+.freeze-wrap.frozen .freeze-dot { background: rgba(255,255,255,0.75); transform: scale(1.2); }
+.freeze-wrap.frozen .freeze-label { color: rgba(255,255,255,0.8); }
+
+/* Dev time simulator */
+#devMenu {
+  position: fixed;
+  top: 12px; right: 12px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: 'Libre Baskerville', serif;
+}
+#devMenu label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+#devMenu select {
+  font-family: 'Libre Baskerville', serif;
+  font-size: 11px;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  padding-right: 4px;
+}
+#devMenu select option { background: #2a2a2a; color: #fff; }
+</style>
+</head>
+<body>
+
+<div id="bgGradient"></div>
+<canvas id="lineCanvas"></canvas>
+
+<div class="scene">
+  <div class="title">Flohours</div>
+  <div class="clock-wrap">
+    <canvas id="clockCanvas"></canvas>
+    <div class="center-text">
+      <div class="center-label" id="centerLabel">Current flower</div>
+      <div class="center-flower" id="flowerName">Ice-Plant</div>
+      <div class="center-offline" id="offlineMsg"></div>
+    </div>
+  </div>
+  <div class="freeze-wrap" id="freezeBtn">
+    <div class="freeze-label">freeze</div>
+    <div class="freeze-dot"></div>
+  </div>
+</div>
+
+<audio id="audioEl" preload="none"></audio>
+
+<!-- Dev time simulator -->
+<div id="devMenu">
+  <label>sim time</label>
+  <select id="timeSelect">
+    <option value="">real time</option>
+    <option value="8">08:00 — before</option>
+    <option value="9">09:00 — before</option>
+    <option value="10">10:00 — Ice-Plant</option>
+    <option value="11">11:00 — Goat's Beard</option>
+    <option value="12">12:00 — Sonchus</option>
+    <option value="13">13:00 — Proliferous Pink</option>
+    <option value="14">14:00 — Marsh Sowthistle</option>
+    <option value="15">15:00 — Pot Marigold</option>
+    <option value="16">16:00 — Alyssum</option>
+    <option value="17">17:00 — White Waterlily</option>
+    <option value="19">19:00 — after</option>
+  </select>
+</div>
+
+<script>
+const AUDIO_URL = 'https://pub-102abf85ed564fc2bf59b333d4e4fe82.r2.dev/compress.mp3';
+const START_H = 10, END_H = 18, TOTAL_SECS = (END_H - START_H) * 3600;
+
+const FLOWERS = [
+  { hour: 10, name: 'Ice-Plant' },
+  { hour: 11, name: "Goat's Beard" },
+  { hour: 12, name: 'Sonchus' },
+  { hour: 13, name: 'Proliferous Pink' },
+  { hour: 14, name: 'Marsh Sowthistle' },
+  { hour: 15, name: 'Pot Marigold' },
+  { hour: 16, name: 'Alyssum' },
+  { hour: 17, name: 'White Waterlily' },
+];
+
+let frozen = false;
+let audioCtx, gainNode, audioEl;
+let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+function getNow() {
+  const d = new Date();
+  const sim = document.getElementById('timeSelect')?.value;
+  const h = sim !== '' && sim !== null && sim !== undefined ? parseInt(sim) : d.getHours();
+  return { h, m: d.getMinutes(), s: d.getSeconds(), ms: d.getMilliseconds() };
+}
+function isLive() {
+  const { h } = getNow();
+  return h >= START_H && h < END_H;
+}
+function getElapsedSecs() {
+  const { h, m, s } = getNow();
+  return Math.max(0, Math.min(TOTAL_SECS, (h - START_H) * 3600 + m * 60 + s));
+}
+function getCurrentFlower() {
+  const { h } = getNow();
+  const clamped = Math.max(START_H, Math.min(END_H - 1, h));
+  return FLOWERS.find(f => f.hour === clamped) || FLOWERS[0];
+}
+
+// ── Clock ──
+const clockCanvas = document.getElementById('clockCanvas');
+const clockCtx = clockCanvas.getContext('2d');
+
+function initClockCanvas() {
+  const size = clockCanvas.offsetWidth;
+  clockCanvas.width = size * dpr; clockCanvas.height = size * dpr;
+  clockCtx.scale(dpr, dpr);
+}
+
+function drawClock() {
+  const size = clockCanvas.offsetWidth;
+  const CX = size/2, CY = size/2;
+  const R = size * 0.40;
+  const rHour = R * 0.46, rMin = R * 0.95;
+  clockCtx.clearRect(0, 0, size, size);
+
+  const { h, m, s, ms } = getNow();
+  const totalSecs = (h - START_H) * 3600 + m * 60 + s;
+
+  // Outer ring
+  clockCtx.save();
+  clockCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+  clockCtx.lineWidth = 0.8;
+  clockCtx.beginPath();
+  clockCtx.arc(CX, CY, R * 1.22, 0, 2 * Math.PI);
+  clockCtx.stroke();
+  clockCtx.restore();
+
+  // Flower labels
+  const fontSize = size * 0.024;
+  const labelR = R * 1.095;
+  FLOWERS.forEach((fl, i) => {
+    const startAngle = (i / 8) * 2 * Math.PI + Math.PI * 1.25;
+    const text = fl.name;
+    clockCtx.font = `400 ${fontSize}px 'Libre Baskerville', Baskerville, Georgia, serif`;
+    const charWidths = text.split('').map(ch => clockCtx.measureText(ch).width);
+    const charAngles = charWidths.map(w => w / labelR);
+    let a = startAngle;
+    text.split('').forEach((ch, ci) => {
+      const half = charAngles[ci] / 2;
+      a += half;
+      clockCtx.save();
+      clockCtx.translate(CX, CY);
+      clockCtx.rotate(a);
+      clockCtx.translate(0, -labelR);
+      clockCtx.font = `400 ${fontSize}px 'Libre Baskerville', Baskerville, Georgia, serif`;
+      clockCtx.fillStyle = 'rgba(255,255,255,0.42)';
+      clockCtx.textAlign = 'center';
+      clockCtx.textBaseline = 'middle';
+      clockCtx.fillText(ch, 0, 0);
+      clockCtx.restore();
+      a += half;
+    });
+  });
+
+  // Hour numbers
+  const hours = [10,11,12,13,14,15,16,17];
+  hours.forEach((hr, i) => {
+    const angle = (i / 8) * 2 * Math.PI + Math.PI * 0.75;
+    const nr = R * 0.78;
+    const x = CX + nr * Math.cos(angle), y = CY + nr * Math.sin(angle);
+    const isCurrent = hr === Math.max(START_H, Math.min(END_H-1, h));
+    clockCtx.save();
+    clockCtx.font = `${isCurrent ? 700 : 400} ${size * (isCurrent ? 0.052 : 0.042)}px 'Libre Baskerville', Baskerville, Georgia, serif`;
+    clockCtx.fillStyle = isCurrent ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.45)';
+    clockCtx.textAlign = 'center'; clockCtx.textBaseline = 'middle';
+    clockCtx.fillText(String(hr), x, y);
+    clockCtx.restore();
+  });
+
+  // Only draw dots when live
+  if (!isLive()) return;
+
+  // Hour dot
+  const hourPct = Math.max(0, Math.min(1, totalSecs / TOTAL_SECS));
+  const hourAngle = hourPct * 2 * Math.PI + Math.PI * 0.75;
+  const hx = CX + rHour * Math.cos(hourAngle), hy = CY + rHour * Math.sin(hourAngle);
+  const hGlow = clockCtx.createRadialGradient(hx, hy, 0, hx, hy, size*0.12);
+  hGlow.addColorStop(0, 'rgba(255,255,245,0.45)'); hGlow.addColorStop(1, 'rgba(255,255,245,0)');
+  clockCtx.save(); clockCtx.fillStyle = hGlow;
+  clockCtx.beginPath(); clockCtx.arc(hx, hy, size*0.12, 0, 2*Math.PI); clockCtx.fill(); clockCtx.restore();
+  clockCtx.save(); clockCtx.fillStyle = 'rgba(255,255,255,0.95)';
+  clockCtx.beginPath(); clockCtx.arc(hx, hy, size*0.038, 0, 2*Math.PI); clockCtx.fill(); clockCtx.restore();
+
+  // Minute dot with breathing
+  const minPct = (s + ms / 1000) / 60;
+  const minAngle = minPct * 2 * Math.PI + Math.PI * 0.75;
+  const mx = CX + rMin * Math.cos(minAngle), my = CY + rMin * Math.sin(minAngle);
+  const breathM = 1 + 0.18 * Math.sin(Date.now() / 1000 * (2 * Math.PI / 3));
+  const mGlow = clockCtx.createRadialGradient(mx, my, 0, mx, my, size*0.08*breathM);
+  mGlow.addColorStop(0, 'rgba(255,255,245,0.3)'); mGlow.addColorStop(1, 'rgba(255,255,245,0)');
+  clockCtx.save(); clockCtx.fillStyle = mGlow;
+  clockCtx.beginPath(); clockCtx.arc(mx, my, size*0.08*breathM, 0, 2*Math.PI); clockCtx.fill(); clockCtx.restore();
+  clockCtx.save(); clockCtx.fillStyle = 'rgba(255,255,255,0.88)';
+  clockCtx.beginPath(); clockCtx.arc(mx, my, size*0.022*breathM, 0, 2*Math.PI); clockCtx.fill(); clockCtx.restore();
+}
+
+// ── Vertical lines ──
+function drawLines() {
+  const W = window.innerWidth, H = window.innerHeight;
+  const rect = document.getElementById('clockCanvas').getBoundingClientRect();
+  const canvasCX = rect.left + rect.width / 2;
+  const canvasCY = rect.top  + rect.height / 2;
+  const outerR = rect.width * 0.40 * 1.22 / 2;
+  const lx = canvasCX - outerR;
+  const rx = canvasCX + outerR;
+  const screenR = rect.height * 0.40 * 1.06;
+  const circTop    = canvasCY - screenR;
+  const circBottom = canvasCY + screenR;
+
+  const oc = document.getElementById('lineCanvas');
+  oc.width = W * dpr; oc.height = H * dpr;
+  oc.style.width = W + 'px'; oc.style.height = H + 'px';
+  const lctx = oc.getContext('2d');
+  lctx.scale(dpr, dpr);
+  lctx.clearRect(0, 0, W, H);
+  lctx.strokeStyle = 'rgba(255,255,255,0.32)';
+  lctx.lineWidth = 0.8;
+  lctx.beginPath(); lctx.moveTo(lx, 0);          lctx.lineTo(lx, circTop);    lctx.stroke();
+  lctx.beginPath(); lctx.moveTo(lx, circBottom);  lctx.lineTo(lx, H);          lctx.stroke();
+  lctx.beginPath(); lctx.moveTo(rx, 0);           lctx.lineTo(rx, circTop);    lctx.stroke();
+  lctx.beginPath(); lctx.moveTo(rx, circBottom);  lctx.lineTo(rx, H);          lctx.stroke();
+}
+
+// ── Flower name / offline state ──
+let lastFlower = '';
+function updateFlower() {
+  const flowerEl = document.getElementById('flowerName');
+  const labelEl  = document.getElementById('centerLabel');
+  const offlineEl = document.getElementById('offlineMsg');
+
+  if (isLive()) {
+    const flower = getCurrentFlower().name;
+    offlineEl.style.display = 'none';
+    flowerEl.style.display = 'block';
+    labelEl.style.display = 'block';
+    if (flower !== lastFlower) {
+      flowerEl.style.opacity = '0';
+      setTimeout(() => { flowerEl.textContent = flower; flowerEl.style.opacity = '1'; lastFlower = flower; }, 800);
+    }
+  } else {
+    flowerEl.style.display = 'none';
+    labelEl.style.display = 'none';
+    offlineEl.style.display = 'block';
+    offlineEl.innerHTML = 'Flohours is between cycles.<br><br>The next bloom begins at 10:00<br>— stay watered.';
+  }
+}
+
+// ── Audio ──
+function initAudio() {
+  audioEl = document.getElementById('audioEl');
+  if (!AUDIO_URL || audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = audioCtx.createMediaElementSource(audioEl);
+  gainNode = audioCtx.createGain(); gainNode.gain.value = 1;
+  src.connect(gainNode); gainNode.connect(audioCtx.destination);
+  audioEl.src = AUDIO_URL;
+  audioEl.addEventListener('loadedmetadata', () => {
+    if (!isLive()) return; // don't play outside hours
+    const pos = Math.min(getElapsedSecs(), audioEl.duration - 1);
+    audioEl.currentTime = pos;
+    audioCtx.resume().then(() => audioEl.play().catch(e => console.warn(e)));
+  }, { once: true });
+}
+
+// ── Freeze ──
+document.getElementById('freezeBtn').addEventListener('click', () => {
+  frozen = !frozen;
+  document.getElementById('freezeBtn').classList.toggle('frozen', frozen);
+  const bg = document.getElementById('bgGradient');
+  bg.style.animationPlayState = frozen ? 'paused' : 'running';
+  if (audioEl) {
+    if (frozen) audioEl.pause();
+    else { audioCtx?.resume(); audioEl.play().catch(e => console.warn(e)); }
+  }
+});
+
+// ── Loop ──
+function frame() {
+  if (!frozen) { drawClock(); updateFlower(); }
+  drawLines();
+  requestAnimationFrame(frame);
+}
+
+function init() {
+  initClockCanvas();
+  drawClock(); updateFlower(); drawLines();
+  if (AUDIO_URL) document.body.addEventListener('click', initAudio, { once: true });
+  requestAnimationFrame(frame);
+}
+
+window.addEventListener('resize', () => { dpr = Math.min(window.devicePixelRatio||1,2); initClockCanvas(); });
+init();
+</script>
+</body>
+</html>
