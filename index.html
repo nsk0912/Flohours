@@ -321,7 +321,7 @@ document.getElementById('freezeBtn').addEventListener('click', () => {
   bg.style.animationPlayState = frozen ? 'paused' : 'running';
   if (audioEl) {
     if (frozen) audioEl.pause();
-    else audioEl.play().catch(e => console.warn(e));
+    else if (isLive()) audioEl.play().catch(e => console.warn(e));
   }
 });
 
