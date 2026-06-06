@@ -394,8 +394,9 @@ function init() {
       console.log('Audio ready at position', pos);
     }, { once: true });
 
-    // On first click just call play()
+    // On first click just call play() — only if live
     const startAudio = () => {
+      if (!isLive()) return;
       audioEl.play().then(() => console.log('Playing!')).catch(e => console.warn('Play error:', e));
     };
     document.body.addEventListener('click', startAudio, { once: true });
