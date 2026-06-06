@@ -220,7 +220,7 @@ function drawClock() {
 
   // Outer ring
   clockCtx.save();
-  clockCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+  clockCtx.strokeStyle = 'rgba(255,255,255,1)';
   clockCtx.lineWidth = 2;
   clockCtx.beginPath();
   clockCtx.arc(CX, CY, R * 1.22, 0, 2 * Math.PI);
@@ -315,7 +315,7 @@ function drawLines() {
   const lctx = oc.getContext('2d');
   lctx.scale(dpr, dpr);
   lctx.clearRect(0, 0, W, H);
-  lctx.strokeStyle = 'rgba(255,255,255,0.32)';
+  lctx.strokeStyle = 'rgba(255,255,255,1)';
   lctx.lineWidth = 2;
   lctx.beginPath(); lctx.moveTo(lx, 0);          lctx.lineTo(lx, circTop);    lctx.stroke();
   lctx.beginPath(); lctx.moveTo(lx, circBottom);  lctx.lineTo(lx, H);          lctx.stroke();
