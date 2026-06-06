@@ -221,7 +221,7 @@ function drawClock() {
   // Outer ring
   clockCtx.save();
   clockCtx.strokeStyle = 'rgba(255,255,255,1)';
-  clockCtx.lineWidth = 2;
+  clockCtx.lineWidth = 1.4;
   clockCtx.beginPath();
   clockCtx.arc(CX, CY, R * 1.22, 0, 2 * Math.PI);
   clockCtx.stroke();
@@ -316,7 +316,7 @@ function drawLines() {
   lctx.scale(dpr, dpr);
   lctx.clearRect(0, 0, W, H);
   lctx.strokeStyle = 'rgba(255,255,255,1)';
-  lctx.lineWidth = 2;
+  lctx.lineWidth = 1.4;
   lctx.beginPath(); lctx.moveTo(lx, 0);          lctx.lineTo(lx, circTop);    lctx.stroke();
   lctx.beginPath(); lctx.moveTo(lx, circBottom);  lctx.lineTo(lx, H);          lctx.stroke();
   lctx.beginPath(); lctx.moveTo(rx, 0);           lctx.lineTo(rx, circTop);    lctx.stroke();
