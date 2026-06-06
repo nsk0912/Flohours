@@ -82,39 +82,7 @@ body { display: flex; align-items: center; justify-content: center; background: 
 .freeze-wrap.frozen .freeze-dot { background: rgba(255,255,255,0.75); transform: scale(1.2); }
 .freeze-wrap.frozen .freeze-label { color: rgba(255,255,255,0.8); }
 
-/* Dev time simulator */
-#devMenu {
-  position: fixed;
-  top: 12px; right: 12px;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(8px);
-  border: 0.5px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-family: 'Libre Baskerville', serif;
-}
-#devMenu label {
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
-}
-#devMenu select {
-  font-family: 'Libre Baskerville', serif;
-  font-size: 11px;
-  background: transparent;
-  border: none;
-  color: rgba(255,255,255,0.8);
-  cursor: pointer;
-  outline: none;
-  -webkit-appearance: none;
-  padding-right: 4px;
-}
-#devMenu select option { background: #2a2a2a; color: #fff; }
+
 </style>
 </head>
 <body>
@@ -140,24 +108,7 @@ body { display: flex; align-items: center; justify-content: center; background: 
 
 <audio id="audioEl" preload="none" crossorigin="anonymous"></audio>
 
-<!-- Dev time simulator -->
-<div id="devMenu">
-  <label>sim time</label>
-  <select id="timeSelect">
-    <option value="">real time</option>
-    <option value="8">08:00 — before</option>
-    <option value="9">09:00 — before</option>
-    <option value="10">10:00 — Ice-Plant</option>
-    <option value="11">11:00 — Goat's Beard</option>
-    <option value="12">12:00 — Sonchus</option>
-    <option value="13">13:00 — Proliferous Pink</option>
-    <option value="14">14:00 — Marsh Sowthistle</option>
-    <option value="15">15:00 — Pot Marigold</option>
-    <option value="16">16:00 — Alyssum</option>
-    <option value="17">17:00 — White Waterlily</option>
-    <option value="19">19:00 — after</option>
-  </select>
-</div>
+
 
 <script>
 const AUDIO_URL = 'https://pub-102abf85ed564fc2bf59b333d4e4fe82.r2.dev/flohours2026.mp3';
@@ -180,9 +131,7 @@ let dpr = Math.min(window.devicePixelRatio || 1, 2);
 
 function getNow() {
   const d = new Date();
-  const sim = document.getElementById('timeSelect')?.value;
-  const h = sim !== '' && sim !== null && sim !== undefined ? parseInt(sim) : d.getHours();
-  return { h, m: d.getMinutes(), s: d.getSeconds(), ms: d.getMilliseconds() };
+  return { h: d.getHours(), m: d.getMinutes(), s: d.getSeconds(), ms: d.getMilliseconds() };
 }
 function isLive() {
   const { h } = getNow();
@@ -452,17 +401,7 @@ function init() {
     document.body.addEventListener('click', startAudio, { once: true });
     document.body.addEventListener('touchend', startAudio, { once: true });
 
-    // When sim time changes, seek audio to new position
-    document.getElementById('timeSelect').addEventListener('change', () => {
-      if (audioEl && audioEl.src && audioEl.duration) {
-        const pos = Math.min(getElapsedSecs(), audioEl.duration - 1);
-        if (isFinite(pos) && pos >= 0) {
-          audioEl.currentTime = pos;
-          console.log('Seeked to', pos);
-          audioEl.play().catch(e => console.warn(e));
-        }
-      }
-    });
+
   }
   requestAnimationFrame(frame);
 }
