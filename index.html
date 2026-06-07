@@ -90,17 +90,33 @@ body { display: flex; align-items: center; justify-content: center; background: 
 <div id="bgGradient"></div>
 <canvas id="lineCanvas"></canvas>
 
+<div id="tapOverlay" style="
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+">
+  <div style="
+    font-family: 'Libre Baskerville', serif;
+    font-size: clamp(8px, 1.6vw, 11px);
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.8;
+  ">tap<br>resume flohours</div>
+</div>
+
 <div class="scene">
-  <div class="title">Flohours</div>
+  <div class="title" id="mainTitle" style="opacity:0;transition:opacity 0.8s;">Flohours</div>
   <div class="clock-wrap">
     <canvas id="clockCanvas"></canvas>
-    <div class="center-text">
+    <div class="center-text" id="centerText" style="opacity:0;transition:opacity 0.8s;">
       <div class="center-label" id="centerLabel">Current flower</div>
       <div class="center-flower" id="flowerName">Ice-Plant</div>
       <div class="center-offline" id="offlineMsg"></div>
     </div>
   </div>
-  <div class="freeze-wrap" id="freezeBtn">
+  <div class="freeze-wrap" id="freezeBtn" style="opacity:0;transition:opacity 0.8s;">
     <div class="freeze-label">freeze</div>
     <div class="freeze-dot"></div>
   </div>
@@ -396,11 +412,28 @@ function init() {
 
     // On first click just call play() — only if live
     const startAudio = () => {
+      const overlay = document.getElementById('tapOverlay');
+      if (overlay) overlay.style.display = 'none';
+      // Fade in title and center text
+      ['mainTitle','centerText','freezeBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.opacity = '1';
+      });
       if (!isLive()) return;
       audioEl.play().then(() => console.log('Playing!')).catch(e => console.warn('Play error:', e));
     };
     document.body.addEventListener('click', startAudio, { once: true });
     document.body.addEventListener('touchend', startAudio, { once: true });
+    
+    // If not live: hide overlay, show all elements immediately
+    if (!isLive()) {
+      const overlay = document.getElementById('tapOverlay');
+      if (overlay) overlay.style.display = 'none';
+      ['mainTitle','centerText','freezeBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.opacity = '1';
+      });
+    }
 
 
   }
