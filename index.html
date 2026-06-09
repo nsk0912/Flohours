@@ -290,17 +290,20 @@ function drawLines() {
   lctx.beginPath(); lctx.moveTo(rx, circBottom);  lctx.lineTo(rx, H);          lctx.stroke();
 
   // Watch crown/knob — sticks out to the right of the circle
-  const circR = rect.width * 0.40 * 1.22; // actual circle radius in screen px
-  const knobStartX = canvasCX + circR;     // right edge of circle
-  const knobW = circR * 0.12;
+  const circR = rect.width * 0.40 * 1.22;
+  const knobStartX = canvasCX + circR;
   const knobH = circR * 0.22;
   const knobKY = canvasCY - knobH / 2;
-  lctx.beginPath();
-  lctx.moveTo(knobStartX, knobKY);
-  lctx.lineTo(knobStartX + knobW, knobKY);
-  lctx.lineTo(knobStartX + knobW, knobKY + knobH);
-  lctx.lineTo(knobStartX, knobKY + knobH);
-  lctx.stroke();
+  // Clamp knob width so it never overflows viewport
+  const knobW = Math.min(circR * 0.12, W - knobStartX - 2);
+  if (knobW > 2) {
+    lctx.beginPath();
+    lctx.moveTo(knobStartX, knobKY);
+    lctx.lineTo(knobStartX + knobW, knobKY);
+    lctx.lineTo(knobStartX + knobW, knobKY + knobH);
+    lctx.lineTo(knobStartX, knobKY + knobH);
+    lctx.stroke();
+  }
 }
 
 // ── Flower name / offline state ──
