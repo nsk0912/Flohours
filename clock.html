@@ -31,7 +31,7 @@ body { display: flex; align-items: center; justify-content: center; background: 
 
 .scene {
   position: relative; z-index: 1;
-  width: min(98vw, 560px);
+  width: min(88vw, 560px);
   display: flex; flex-direction: column; align-items: center;
 }
 
@@ -121,6 +121,25 @@ body { display: flex; align-items: center; justify-content: center; background: 
 
 <div id="bgGradient"></div>
 <canvas id="lineCanvas"></canvas>
+
+<div id="tapOverlay" style="
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+">
+  <div style="
+    font-family: 'Libre Baskerville', serif;
+    font-size: clamp(10px, 2vw, 13px);
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    border-radius: 99px;
+    padding: 10px 24px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(8px);
+  ">resume flohours</div>
+</div>
 
 <div class="scene">
   <div class="title">Flohours</div>
@@ -227,6 +246,8 @@ function drawClock() {
   clockCtx.stroke();
   clockCtx.restore();
 
+
+
   // Flower labels
   const fontSize = size * 0.024;
   const labelR = R * 1.095;
@@ -321,6 +342,22 @@ function drawLines() {
   lctx.beginPath(); lctx.moveTo(lx, circBottom);  lctx.lineTo(lx, H);          lctx.stroke();
   lctx.beginPath(); lctx.moveTo(rx, 0);           lctx.lineTo(rx, circTop);    lctx.stroke();
   lctx.beginPath(); lctx.moveTo(rx, circBottom);  lctx.lineTo(rx, H);          lctx.stroke();
+
+  // Watch crown/knob — sticks out to the right of the circle
+  const circR = rect.width * 0.40 * 1.22;
+  const knobStartX = canvasCX + circR;
+  const knobH = circR * 0.22;
+  const knobKY = canvasCY - knobH / 2;
+  // Clamp knob width so it never overflows viewport
+  const knobW = Math.min(circR * 0.12, W - knobStartX - 2);
+  if (knobW > 2) {
+    lctx.beginPath();
+    lctx.moveTo(knobStartX, knobKY);
+    lctx.lineTo(knobStartX + knobW, knobKY);
+    lctx.lineTo(knobStartX + knobW, knobKY + knobH);
+    lctx.lineTo(knobStartX, knobKY + knobH);
+    lctx.stroke();
+  }
 }
 
 // ── Flower name / offline state ──
@@ -451,6 +488,11 @@ function init() {
     };
     document.body.addEventListener('click', startAudio, { once: true });
     document.body.addEventListener('touchend', startAudio, { once: true });
+
+    // Hide overlay on click
+    document.getElementById('tapOverlay').addEventListener('click', () => {
+      document.getElementById('tapOverlay').style.display = 'none';
+    }, { once: true });
 
     // When sim time changes, seek audio to new position
     document.getElementById('timeSelect').addEventListener('change', () => {
